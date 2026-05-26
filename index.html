@@ -165,9 +165,9 @@
         </div>
       </section>
 
-      <!-- 양방 분할 그리드 (가로폭 좁아지는 데스크톱 구간 예외 방지 패치) -->
-      <section id="mainGrid" class="mt-6 grid gap-6 grid-cols-1 xl:grid-cols-[1fr_390px]">
-        <!-- 좌측: 탑승 일정 등록 패널 -->
+      <!-- 양방 분할 그리드 (가로폭 조정: 우측 460px 확장 / 좌측 입력부 소폭 압축) -->
+      <section id="mainGrid" class="mt-6 grid gap-6 grid-cols-1 xl:grid-cols-[1fr_460px]">
+        <!-- 좌측: 탑승 일정 등록 패널 (너비 보정) -->
         <section id="schedulePanel" class="rounded-2xl border border-line bg-white shadow-lift overflow-hidden">
           <div class="flex flex-col gap-4 border-b border-line p-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -181,7 +181,7 @@
           </div>
 
           <!-- 테이블 헤더 (그리드 폭 일치) -->
-          <div class="hidden border-b border-line bg-soft px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-400 md:grid md:grid-cols-[80px_110px_110px_1fr_60px] md:gap-3">
+          <div class="hidden border-b border-line bg-soft px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-400 md:grid md:grid-cols-[75px_105px_105px_minmax(220px,1fr)_55px] md:gap-3">
             <span>여행 일차</span>
             <span>열차 구분</span>
             <span class="text-right">추정 정상가</span>
@@ -193,7 +193,7 @@
           <div id="tripRows" class="divide-y divide-line"></div>
         </section>
 
-        <!-- 우측: 분석 결과 리포트 & 실시간 리더보드 -->
+        <!-- 우측: 분석 결과 리포트 & 실시간 리더보드 (확장됨) -->
         <section id="resultPanel" class="xl:sticky xl:top-6 xl:self-start space-y-6">
           <!-- 최적 상품 안내 카드 (Hero) -->
           <section id="heroResult" class="overflow-hidden rounded-2xl border border-line bg-ink text-white shadow-lift transition duration-200">
@@ -284,9 +284,9 @@
     </div>
   </aside>
 
-  <!-- 일정 템플릿 마크업 (boarding pass 디자인) -->
+  <!-- 일정 템플릿 마크업 ( boarding pass 디자인 - 폭 압축) -->
   <template id="tripRowTemplate">
-    <div class="trip-row grid grid-cols-1 gap-4 p-5 md:grid-cols-[80px_110px_110px_1fr_60px] md:items-center md:gap-3 md:px-5 hover:bg-soft/40 transition">
+    <div class="trip-row grid grid-cols-1 gap-4 p-5 md:grid-cols-[75px_105px_105px_minmax(220px,1fr)_55px] md:items-center md:gap-3 md:px-5 hover:bg-soft/40 transition">
       <!-- 1. 일차 -->
       <label class="block">
         <span class="text-[11px] font-bold text-slate-500 md:hidden">일차</span>
@@ -318,7 +318,7 @@
         <span class="text-[11px] font-bold text-slate-500 md:hidden">출도착 구간</span>
         <input class="origin" type="hidden" value="서울" />
         <input class="destination" type="hidden" value="부산" />
-        <div class="mt-1 grid grid-cols-[1fr_36px_1fr] items-center gap-2 md:mt-0">
+        <div class="mt-1 grid grid-cols-[1fr_20px_1fr] items-center gap-2 md:mt-0">
           <!-- 출발지 오토컴플릿 -->
           <div class="station-combo relative">
             <input class="station-input origin-input h-11 w-full rounded-xl border border-line bg-white px-3.5 text-sm font-bold outline-none focus:border-rail focus:ring-2 focus:ring-rail/20" value="서울" aria-label="출발역" autocomplete="off" />
@@ -855,6 +855,59 @@
       document.getElementById('detailReport').innerHTML = '';
     }
 
+    // [로컬스토리지 자동 저장 캐시 시스템 구현]
+    function saveToCache() {
+      const trips = [...rowsEl.querySelectorAll('.trip-row')].map(row => ({
+        day: row.querySelector('.day').value,
+        train: row.querySelector('.train').value,
+        origin: row.querySelector('.origin-input').value,
+        destination: row.querySelector('.destination-input').value
+      }));
+
+      const cacheData = {
+        travelerName: document.getElementById('travelerName').value,
+        ageType: ageTypeEl.value,
+        passType: passTypeEl.value,
+        trips: trips
+      };
+
+      try {
+        localStorage.setItem('naeilro_schedule_cache', JSON.stringify(cacheData));
+      } catch (e) {
+        console.error('로컬스토리지 캐시 저장 실패:', e);
+      }
+    }
+
+    // [로컬스토리지 자동 캐시 복원 시스템 구현]
+    function loadFromCache() {
+      try {
+        const rawData = localStorage.getItem('naeilro_schedule_cache');
+        if (!rawData) return false;
+
+        const cacheData = JSON.parse(rawData);
+        if (!cacheData || !Array.isArray(cacheData.trips)) return false;
+
+        // 사용자 정보 복원
+        document.getElementById('travelerName').value = cacheData.travelerName || '여행객';
+        ageTypeEl.value = cacheData.ageType || 'YOUTH';
+        passTypeEl.value = cacheData.passType || 'flex3';
+        updatePassPriceSummary(); // UI 스위치 상태 동기화
+
+        // 기본 행 초기화
+        rowsEl.innerHTML = '';
+
+        // 여정 리스트 복원
+        cacheData.trips.forEach(trip => {
+          addTrip(trip);
+        });
+
+        return true;
+      } catch (e) {
+        console.error('로컬스토리지 캐시 로드 실패:', e);
+        return false;
+      }
+    }
+
     function runAnalysis() {
       updateInputHint();
       const trips = collectTrips();
@@ -869,6 +922,9 @@
       renderChart(options);
       renderUsage(result);
       renderReport(result);
+      
+      // 분석 갱신 시점에 브라우저 캐시에 상태 저장
+      saveToCache();
     }
 
     document.querySelectorAll('.choice-group').forEach((group) => {
@@ -903,9 +959,14 @@
 
     applyTheme(storedTheme() || (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
     updatePassPriceSummary();
-    addTrip({ day: 1, train: 'KTX', origin: '서울', destination: '부산' });
-    addTrip({ day: 2, train: 'REGULAR', origin: '부산', destination: '순천' });
-    addTrip({ day: 3, train: 'KTX', origin: '순천', destination: '서울' });
+    
+    // 로컬 캐시 우선 복원, 캐시가 비어있을 때만 기본 세팅 복원
+    const hasCache = loadFromCache();
+    if (!hasCache) {
+      addTrip({ day: 1, train: 'KTX', origin: '서울', destination: '부산' });
+      addTrip({ day: 2, train: 'REGULAR', origin: '부산', destination: '순천' });
+      addTrip({ day: 3, train: 'KTX', origin: '순천', destination: '서울' });
+    }
     runAnalysis();
   </script>
 </body>
