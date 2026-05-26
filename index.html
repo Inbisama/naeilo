@@ -165,10 +165,10 @@
         </div>
       </section>
 
-      <!-- 양방 분할 그리드 -->
-      <section id="mainGrid" class="mt-6 grid gap-6 grid-cols-1 lg:grid-cols-[1fr_390px]">
+      <!-- 양방 분할 그리드 (가로폭 좁아지는 데스크톱 구간 예외 방지 패치) -->
+      <section id="mainGrid" class="mt-6 grid gap-6 grid-cols-1 xl:grid-cols-[1fr_390px]">
         <!-- 좌측: 탑승 일정 등록 패널 -->
-        <section id="schedulePanel" class="order-2 lg:order-1 rounded-2xl border border-line bg-white shadow-lift overflow-hidden">
+        <section id="schedulePanel" class="rounded-2xl border border-line bg-white shadow-lift overflow-hidden">
           <div class="flex flex-col gap-4 border-b border-line p-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 class="text-xl font-black">나의 여행 일정 관리</h2>
@@ -180,8 +180,8 @@
             </div>
           </div>
 
-          <!-- 테이블 헤더 (대화형) -->
-          <div class="hidden border-b border-line bg-soft px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-400 md:grid md:grid-cols-[90px_130px_130px_minmax(260px,1fr)_70px] md:gap-3">
+          <!-- 테이블 헤더 (그리드 폭 일치) -->
+          <div class="hidden border-b border-line bg-soft px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-400 md:grid md:grid-cols-[80px_110px_110px_1fr_60px] md:gap-3">
             <span>여행 일차</span>
             <span>열차 구분</span>
             <span class="text-right">추정 정상가</span>
@@ -194,7 +194,7 @@
         </section>
 
         <!-- 우측: 분석 결과 리포트 & 실시간 리더보드 -->
-        <section id="resultPanel" class="order-1 lg:order-2 lg:sticky lg:top-6 lg:self-start space-y-6">
+        <section id="resultPanel" class="xl:sticky xl:top-6 xl:self-start space-y-6">
           <!-- 최적 상품 안내 카드 (Hero) -->
           <section id="heroResult" class="overflow-hidden rounded-2xl border border-line bg-ink text-white shadow-lift transition duration-200">
             <div class="p-5">
@@ -206,7 +206,7 @@
               <p id="resultMessage" class="mt-2 text-sm text-slate-300 leading-relaxed break-keep"></p>
 
               <!-- 주요 수치 요약 -->
-              <div id="summaryGrid" class="mt-5 grid gap-2.5 grid-cols-3">
+              <div id="summaryGrid" class="mt-5 grid gap-2.5 grid-cols-1 sm:grid-cols-3">
                 <div class="rounded-xl bg-white/5 border border-white/5 p-3">
                   <p class="text-[11px] font-bold text-slate-400">일반 총액</p>
                   <p id="normalTotal" class="mt-1 text-lg font-black break-words">0원</p>
@@ -222,7 +222,7 @@
               </div>
             </div>
 
-            <!-- 그래프 컨테이너 (너비 수축 대응 패치) -->
+            <!-- 그래프 컨테이너 (너비 수축 완벽 대응) -->
             <div class="border-t border-white/5 bg-white/[0.02] p-4 min-w-0 overflow-hidden">
               <div id="comparisonWrap" class="relative w-full h-44 sm:h-48 overflow-hidden min-w-0">
                 <canvas id="comparisonChart" aria-label="총지출 가성비 비교 차트" class="w-full h-full"></canvas>
@@ -286,11 +286,11 @@
 
   <!-- 일정 템플릿 마크업 (boarding pass 디자인) -->
   <template id="tripRowTemplate">
-    <div class="trip-row grid grid-cols-1 gap-4 p-5 sm:grid-cols-[90px_130px_130px_minmax(260px,1fr)_70px] sm:items-center sm:gap-3 sm:px-5 hover:bg-soft/40 transition">
+    <div class="trip-row grid grid-cols-1 gap-4 p-5 md:grid-cols-[80px_110px_110px_1fr_60px] md:items-center md:gap-3 md:px-5 hover:bg-soft/40 transition">
       <!-- 1. 일차 -->
       <label class="block">
-        <span class="text-[11px] font-bold text-slate-500 sm:hidden">일차</span>
-        <select class="day mt-1 h-11 w-full rounded-xl border border-line bg-white px-3 text-sm font-semibold outline-none focus:border-rail focus:ring-2 focus:ring-rail/20 sm:mt-0">
+        <span class="text-[11px] font-bold text-slate-500 md:hidden">일차</span>
+        <select class="day mt-1 h-11 w-full rounded-xl border border-line bg-white px-3 text-sm font-semibold outline-none focus:border-rail focus:ring-2 focus:ring-rail/20 md:mt-0">
           <option value="1">1일차</option>
           <option value="2">2일차</option>
           <option value="3">3일차</option>
@@ -302,23 +302,23 @@
       </label>
       <!-- 2. 열차구분 -->
       <label class="block">
-        <span class="text-[11px] font-bold text-slate-500 sm:hidden">열차</span>
-        <select class="train mt-1 h-11 w-full rounded-xl border border-line bg-white px-3 text-sm font-semibold outline-none focus:border-rail focus:ring-2 focus:ring-rail/20 sm:mt-0">
+        <span class="text-[11px] font-bold text-slate-500 md:hidden">열차</span>
+        <select class="train mt-1 h-11 w-full rounded-xl border border-line bg-white px-3 text-sm font-semibold outline-none focus:border-rail focus:ring-2 focus:ring-rail/20 md:mt-0">
           <option value="KTX">KTX</option>
           <option value="REGULAR">일반열차</option>
         </select>
       </label>
       <!-- 3. 자동 운임 가독성 증대 -->
       <div>
-        <span class="text-[11px] font-bold text-slate-500 sm:hidden">추정 운임</span>
-        <div class="fare-display mt-1 flex h-11 w-full items-center justify-end rounded-xl border border-line bg-soft px-3.5 text-right text-sm font-black text-rail sm:mt-0">자동</div>
+        <span class="text-[11px] font-bold text-slate-500 md:hidden">추정 운임</span>
+        <div class="fare-display mt-1 flex h-11 w-full items-center justify-end rounded-xl border border-line bg-soft px-3.5 text-right text-sm font-black text-rail md:mt-0">자동</div>
       </div>
       <!-- 4. 기차 탑승권 스타일 구간 선택 UI -->
       <div class="trip-route">
-        <span class="text-[11px] font-bold text-slate-500 sm:hidden">출도착 구간</span>
+        <span class="text-[11px] font-bold text-slate-500 md:hidden">출도착 구간</span>
         <input class="origin" type="hidden" value="서울" />
         <input class="destination" type="hidden" value="부산" />
-        <div class="mt-1 grid grid-cols-[1fr_36px_1fr] items-center gap-2 sm:mt-0">
+        <div class="mt-1 grid grid-cols-[1fr_36px_1fr] items-center gap-2 md:mt-0">
           <!-- 출발지 오토컴플릿 -->
           <div class="station-combo relative">
             <input class="station-input origin-input h-11 w-full rounded-xl border border-line bg-white px-3.5 text-sm font-bold outline-none focus:border-rail focus:ring-2 focus:ring-rail/20" value="서울" aria-label="출발역" autocomplete="off" />
@@ -336,7 +336,7 @@
         </div>
       </div>
       <!-- 5. 삭제 버튼 -->
-      <button type="button" class="remove h-11 rounded-xl border border-line bg-white text-xs font-bold text-slate-500 hover:border-red-300 hover:text-red-600 transition sm:text-sm">
+      <button type="button" class="remove h-11 rounded-xl border border-line bg-white text-xs font-bold text-slate-500 hover:border-red-300 hover:text-red-600 transition md:text-sm">
         삭제
       </button>
     </div>
@@ -372,7 +372,6 @@
         익산: 210.3,
         정읍: 252.5,
         광주송정: 303.8,
-        na주: 319.4, // '나주' 오타 방지용 (필요시 교정)
         나주: 319.4,
         목포: 366.5,
         전주: 251.5,
@@ -705,7 +704,6 @@
         const deltaText = delta === 0 ? '기준' : delta < 0 ? `${won.format(Math.abs(delta))} 절약` : `${won.format(delta)} 추가 지출`;
         const rankMedal = index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉';
         
-        // Flexbox 레이아웃 + break-keep 적용으로 줄바꿈 및 간격 버그 패치
         const row = document.createElement('div');
         row.className = `flex flex-col sm:flex-row gap-3 border-b border-line p-4 last:border-b-0 sm:items-center justify-between ${isWinner ? 'bg-teal/10' : 'bg-white'}`;
         row.innerHTML = `
