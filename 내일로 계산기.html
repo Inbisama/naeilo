@@ -1,0 +1,931 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>내일로 패스 리더보드</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ink: '#101828',
+            rail: '#005BAC',
+            teal: '#00A79D',
+            line: '#D0D5DD',
+            soft: '#F8FAFC',
+            caution: '#B54708'
+          },
+          boxShadow: {
+            lift: '0 14px 35px rgba(16, 24, 40, 0.08)'
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      transition: background-color 180ms ease, color 180ms ease;
+    }
+
+    body.theme-dark {
+      background: radial-gradient(circle at top left, rgba(0, 167, 157, 0.16), transparent 30%),
+        linear-gradient(135deg, #08111f 0%, #0f172a 48%, #111827 100%) !important;
+      color: #e5e7eb !important;
+    }
+
+    body.theme-dark .bg-white,
+    body.theme-dark header {
+      background-color: rgba(15, 23, 42, 0.88) !important;
+    }
+
+    body.theme-dark .bg-soft,
+    body.theme-dark .bg-slate-100 {
+      background-color: rgba(30, 41, 59, 0.82) !important;
+    }
+
+    body.theme-dark .bg-ink {
+      background: linear-gradient(145deg, #020617 0%, #111827 55%, #0f766e 145%) !important;
+    }
+
+    body.theme-dark .text-ink,
+    body.theme-dark .text-slate-800,
+    body.theme-dark .text-slate-700,
+    body.theme-dark .text-slate-600 {
+      color: #e5e7eb !important;
+    }
+
+    body.theme-dark .text-slate-500 {
+      color: #94a3b8 !important;
+    }
+
+    body.theme-dark .text-slate-400,
+    body.theme-dark .text-slate-300 {
+      color: #cbd5e1 !important;
+    }
+
+    body.theme-dark .border-line,
+    body.theme-dark .border {
+      border-color: rgba(148, 163, 184, 0.26) !important;
+    }
+
+    body.theme-dark input,
+    body.theme-dark select,
+    body.theme-dark button.bg-white {
+      background-color: rgba(15, 23, 42, 0.92) !important;
+      color: #f8fafc !important;
+      border-color: rgba(148, 163, 184, 0.32) !important;
+    }
+
+    body.theme-dark input::placeholder {
+      color: #64748b;
+    }
+
+    body.theme-dark .station-menu {
+      background-color: #0f172a !important;
+      box-shadow: 0 18px 34px rgba(0, 0, 0, 0.42) !important;
+    }
+
+    body.theme-dark .shadow-lift {
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28) !important;
+    }
+
+    body.theme-dark #stickyLeaderboard {
+      background-color: rgba(15, 23, 42, 0.94) !important;
+    }
+
+    body.theme-dark .bg-teal\/10 {
+      background-color: rgba(20, 184, 166, 0.16) !important;
+    }
+
+    body.is-compact #mainGrid {
+      grid-template-columns: 1fr !important;
+    }
+
+    body.is-compact #schedulePanel {
+      order: 2 !important;
+    }
+
+    body.is-compact #resultPanel {
+      order: 1 !important;
+      position: static !important;
+    }
+
+    body.is-narrow .trip-row {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    }
+
+    body.is-narrow .trip-route,
+    body.is-narrow .remove {
+      grid-column: 1 / -1 !important;
+    }
+
+    body.is-narrow #summaryGrid {
+      grid-template-columns: 1fr !important;
+    }
+
+    body.is-narrow #scheduleActions {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+    }
+
+    body.is-narrow #comparisonWrap {
+      height: 12rem !important;
+    }
+
+    body.show-sticky-board #stickyLeaderboard {
+      transform: translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+  </style>
+</head>
+<body class="bg-soft text-ink">
+  <main class="min-h-screen">
+    <header class="border-b border-line bg-white">
+      <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6">
+        <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p class="text-xs font-black uppercase tracking-[0.2em] text-rail">Naeilro Fare Board</p>
+            <h1 class="mt-1 text-2xl font-black tracking-tight md:text-3xl">내일로 패스 구매 리더보드</h1>
+          </div>
+          <div class="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-center">
+            <div class="grid grid-cols-2 gap-2 text-xs font-bold text-slate-600 sm:w-[390px]">
+              <div class="rounded-md border border-line bg-soft px-3 py-2">KTX 총 2회 · 1일 1회</div>
+              <div class="rounded-md border border-line bg-soft px-3 py-2">일반열차 1일 2회</div>
+            </div>
+            <button id="themeToggle" type="button" class="h-10 rounded-md border border-line bg-white px-4 text-sm font-black text-ink hover:border-rail hover:text-rail" aria-pressed="false">
+              다크모드
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section class="mx-auto max-w-7xl px-4 py-4 sm:px-6">
+      <section class="rounded-lg border border-line bg-white p-3 shadow-lift md:p-4">
+        <div class="grid gap-3 lg:grid-cols-[220px_1fr_1fr_auto] lg:items-end">
+          <label class="block">
+            <span class="text-xs font-black text-slate-500">여행자</span>
+            <input id="travelerName" type="text" value="여행객" class="mt-1 h-10 w-full rounded-md border border-line px-3 text-sm font-semibold outline-none focus:border-rail focus:ring-2 focus:ring-rail/20" />
+          </label>
+
+          <div>
+            <p class="text-xs font-black text-slate-500">연령 구분</p>
+            <input id="ageType" type="hidden" value="YOUTH" />
+            <div class="choice-group mt-1 grid grid-cols-2 gap-1 rounded-md bg-slate-100 p-1" data-target="ageType">
+              <button type="button" data-value="YOUTH" class="choice h-9 rounded px-3 text-sm font-black">YOUTH</button>
+              <button type="button" data-value="ADULT" class="choice h-9 rounded px-3 text-sm font-black">ADULT</button>
+            </div>
+          </div>
+
+          <div>
+            <p class="text-xs font-black text-slate-500">기준 패스</p>
+            <input id="passType" type="hidden" value="flex3" />
+            <div class="choice-group mt-1 grid grid-cols-2 gap-1 rounded-md bg-slate-100 p-1" data-target="passType">
+              <button type="button" data-value="flex3" class="choice h-9 rounded px-3 text-sm font-black">선택 3일권</button>
+              <button type="button" data-value="consecutive7" class="choice h-9 rounded px-3 text-sm font-black">연속 7일권</button>
+            </div>
+          </div>
+
+          <div class="rounded-md border border-line bg-soft px-3 py-2 lg:min-w-[210px]">
+            <p class="text-[11px] font-black text-slate-500">패스 가격</p>
+            <p id="passPriceSummary" class="mt-0.5 text-sm font-black text-ink"></p>
+          </div>
+        </div>
+      </section>
+
+      <section id="mainGrid" class="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(420px,0.9fr)]">
+        <section id="schedulePanel" class="order-2 rounded-lg border border-line bg-white shadow-lift xl:order-1">
+          <div class="flex flex-col gap-3 border-b border-line p-3 sm:flex-row sm:items-center sm:justify-between md:p-4">
+            <div>
+              <h2 class="text-xl font-black">탑승 일정</h2>
+              <p id="inputHint" class="mt-0.5 text-sm font-bold text-slate-500"></p>
+              <p class="mt-1 text-xs font-bold text-slate-500">운임은 O/D 거리망으로 자동 추정됩니다.</p>
+            </div>
+            <div id="scheduleActions" class="grid grid-cols-2 gap-2 sm:flex">
+              <button id="addTrip" type="button" class="h-10 rounded-md bg-ink px-4 text-sm font-black text-white hover:bg-slate-700">일정 추가</button>
+              <button id="analyze" type="button" class="h-10 rounded-md bg-teal px-4 text-sm font-black text-white hover:bg-teal-700">갱신</button>
+            </div>
+          </div>
+
+          <div class="hidden border-b border-line bg-soft px-4 py-2 text-xs font-black uppercase text-slate-500 md:grid md:grid-cols-[82px_120px_132px_minmax(260px,1fr)_64px] md:gap-2">
+            <span>Day</span>
+            <span>Train</span>
+            <span class="text-right">Auto Fare</span>
+            <span>Origin / Destination</span>
+            <span></span>
+          </div>
+          <div id="tripRows" class="divide-y divide-line"></div>
+        </section>
+
+        <section id="resultPanel" class="order-1 space-y-4 xl:sticky xl:top-4 xl:order-2 xl:self-start">
+          <section id="heroResult" class="overflow-hidden rounded-lg border border-line bg-ink text-white shadow-lift">
+            <div class="p-4 md:p-5">
+              <p class="text-xs font-black uppercase tracking-[0.2em] text-teal">Current Winner</p>
+              <h2 id="resultTitle" class="mt-2 text-3xl font-black tracking-tight md:text-4xl">리더보드 대기 중</h2>
+              <p id="resultMessage" class="mt-3 text-sm font-semibold leading-6 text-slate-300"></p>
+              <div id="summaryGrid" class="mt-4 grid gap-2 sm:grid-cols-3">
+                <div class="min-w-0 rounded-md bg-white/10 p-3">
+                  <p class="text-[11px] font-black text-slate-300">일반</p>
+                  <p id="normalTotal" class="mt-1 break-words text-lg font-black md:text-xl">0원</p>
+                </div>
+                <div class="min-w-0 rounded-md bg-white/10 p-3">
+                  <p class="text-[11px] font-black text-slate-300">패스</p>
+                  <p id="passTotal" class="mt-1 break-words text-lg font-black md:text-xl">0원</p>
+                </div>
+                <div class="min-w-0 rounded-md bg-white/10 p-3">
+                  <p class="text-[11px] font-black text-slate-300">차액</p>
+                  <p id="savingBadge" class="mt-1 break-words text-lg font-black md:text-xl">0원</p>
+                </div>
+              </div>
+            </div>
+            <div class="border-t border-white/10 bg-white/5 p-4">
+              <div id="comparisonWrap" class="h-48 sm:h-56">
+                <canvas id="comparisonChart" aria-label="총지출 비교 차트"></canvas>
+                <div id="chartFallback" class="hidden flex h-full items-center justify-center rounded-md bg-white/5 text-sm font-bold text-slate-300">차트 라이브러리를 불러오지 못했습니다.</div>
+              </div>
+            </div>
+          </section>
+
+          <section class="rounded-lg border border-line bg-white p-3 shadow-lift md:p-4">
+            <div class="flex items-end justify-between gap-2">
+              <div>
+                <p class="text-xs font-black uppercase tracking-[0.16em] text-rail">Leaderboard</p>
+                <h2 class="mt-1 text-xl font-black">구매 선택지 순위</h2>
+              </div>
+              <p id="leaderboardMeta" class="text-xs font-black text-slate-500">분석 전</p>
+            </div>
+            <div id="leaderboard" class="mt-3 overflow-hidden rounded-lg border border-line"></div>
+          </section>
+        </section>
+      </section>
+
+      <section class="mt-4 grid gap-4 lg:grid-cols-[360px_1fr]">
+        <section class="rounded-lg border border-line bg-white p-3 shadow-lift md:p-4">
+          <h2 class="text-lg font-black">혜택 사용 현황</h2>
+          <div class="mt-3 grid grid-cols-2 gap-2">
+            <div class="rounded-md border border-line bg-soft p-3">
+              <p class="text-xs font-black text-slate-500">KTX 무료 처리</p>
+              <p id="ktxUsage" class="mt-1 text-2xl font-black">0 / 2</p>
+            </div>
+            <div class="rounded-md border border-line bg-soft p-3">
+              <p class="text-xs font-black text-slate-500">혜택 제외 운임</p>
+              <p id="uncoveredFare" class="mt-1 text-2xl font-black">0원</p>
+            </div>
+          </div>
+          <div id="dayUsage" class="mt-3 space-y-2"></div>
+        </section>
+
+        <section class="rounded-lg border border-line bg-white p-3 shadow-lift md:p-4">
+          <h2 class="text-lg font-black">판정 로그</h2>
+          <div id="detailReport" class="mt-3 grid gap-2 text-sm leading-6 md:grid-cols-2"></div>
+        </section>
+      </section>
+    </section>
+  </main>
+
+  <aside id="stickyLeaderboard" class="fixed inset-x-0 bottom-0 z-40 translate-y-full border-t border-line bg-white/95 px-3 py-3 opacity-0 shadow-[0_-16px_36px_rgba(16,24,40,0.16)] backdrop-blur transition duration-200">
+    <div class="mx-auto flex max-w-7xl items-center gap-3">
+      <div class="min-w-0 flex-1">
+        <p class="text-[11px] font-black uppercase tracking-[0.16em] text-rail">현재 1위</p>
+        <p id="stickyWinnerName" class="truncate text-sm font-black text-ink">분석 대기</p>
+      </div>
+      <div class="text-right">
+        <p id="stickyWinnerTotal" class="text-base font-black text-ink">0원</p>
+        <p id="stickyWinnerDelta" class="text-xs font-black text-teal">-</p>
+      </div>
+    </div>
+  </aside>
+
+  <template id="tripRowTemplate">
+    <div class="trip-row grid grid-cols-2 gap-3 p-3 md:grid-cols-[82px_120px_132px_minmax(260px,1fr)_64px] md:items-end md:gap-2 md:px-4">
+      <label class="block">
+        <span class="text-[11px] font-black text-slate-500 md:hidden">일차</span>
+        <select class="day mt-1 h-10 w-full rounded-md border border-line bg-white px-2 text-sm font-bold outline-none focus:border-rail focus:ring-2 focus:ring-rail/20 md:mt-0">
+          <option value="1">1일차</option>
+          <option value="2">2일차</option>
+          <option value="3">3일차</option>
+          <option value="4">4일차</option>
+          <option value="5">5일차</option>
+          <option value="6">6일차</option>
+          <option value="7">7일차</option>
+        </select>
+      </label>
+      <label class="block">
+        <span class="text-[11px] font-black text-slate-500 md:hidden">열차</span>
+        <select class="train mt-1 h-10 w-full rounded-md border border-line bg-white px-2 text-sm font-bold outline-none focus:border-rail focus:ring-2 focus:ring-rail/20 md:mt-0">
+          <option value="KTX">KTX</option>
+          <option value="REGULAR">일반열차</option>
+        </select>
+      </label>
+      <div>
+        <span class="text-[11px] font-black text-slate-500 md:hidden">자동 운임</span>
+        <div class="fare-display mt-1 flex h-10 w-full items-center justify-end rounded-md border border-line bg-soft px-3 text-right text-sm font-black text-ink md:mt-0">자동</div>
+      </div>
+      <div class="trip-route col-span-2 md:col-span-1">
+        <span class="text-[11px] font-black text-slate-500 md:hidden">구간</span>
+        <input class="origin" type="hidden" value="서울" />
+        <input class="destination" type="hidden" value="부산" />
+        <div class="mt-1 grid grid-cols-[1fr_24px_1fr] items-center gap-1 md:mt-0">
+          <div class="station-combo relative">
+            <input class="station-input origin-input h-10 w-full rounded-md border border-line bg-white px-3 text-sm font-black outline-none focus:border-rail focus:ring-2 focus:ring-rail/20" value="서울" aria-label="출발역" autocomplete="off" />
+            <div class="station-menu absolute left-0 right-0 top-[calc(100%+6px)] z-30 hidden max-h-48 overflow-auto rounded-md border border-line bg-white p-1 shadow-lift"></div>
+          </div>
+          <span class="text-center text-sm font-black text-slate-400">→</span>
+          <div class="station-combo relative">
+            <input class="station-input destination-input h-10 w-full rounded-md border border-line bg-white px-3 text-sm font-black outline-none focus:border-rail focus:ring-2 focus:ring-rail/20" value="부산" aria-label="도착역" autocomplete="off" />
+            <div class="station-menu absolute left-0 right-0 top-[calc(100%+6px)] z-30 hidden max-h-48 overflow-auto rounded-md border border-line bg-white p-1 shadow-lift"></div>
+          </div>
+        </div>
+      </div>
+      <button type="button" class="remove col-span-2 h-10 rounded-md border border-line bg-white text-sm font-black text-slate-500 hover:border-red-300 hover:text-red-700 md:col-span-1 md:text-xl" aria-label="일정 삭제">삭제</button>
+    </div>
+  </template>
+
+  <script>
+    const stations = [
+      '서울', '용산', '청량리', '영등포', '수원', '광명', '천안아산', '오송', '대전', '김천구미',
+      '동대구', '신경주', '울산', '부산', '포항', '강릉', '원주', '제천', '영주', '안동',
+      '익산', '전주', '정읍', '광주송정', '나주', '목포', '순천', '여수엑스포', '진주', '마산', '창원중앙'
+    ];
+
+    const ktxNetwork = {
+      서부계통: {
+        서울: 0.0,
+        용산: 3.2,
+        영등포: 9.1,
+        광명: 22.0,
+        수원: 41.5,
+        천안아산: 96.0,
+        오송: 124.7,
+        대전: 159.8,
+        김천구미: 233.7,
+        동대구: 293.1,
+        신경주: 342.1,
+        울산: 372.1,
+        부산: 423.8,
+        포항: 361.6,
+        창원중앙: 386.6,
+        마산: 401.3,
+        진주: 454.6,
+        익산: 210.3,
+        정읍: 252.5,
+        광주송정: 303.8,
+        나주: 319.4,
+        목포: 366.5,
+        전주: 251.5,
+        순천: 313.3,
+        여수엑스포: 334.7
+      },
+      동부계통: {
+        청량리: 0.0,
+        원주: 83.0,
+        제천: 121.4,
+        영주: 169.7,
+        안동: 219.4,
+        강릉: 223.2
+      }
+    };
+
+    const passPrices = {
+      ADULT: { consecutive7: 110000, flex3: 100000 },
+      YOUTH: { consecutive7: 80000, flex3: 70000 }
+    };
+
+    const passLabels = {
+      ADULT: 'ADULT',
+      YOUTH: 'YOUTH',
+      consecutive7: '연속 7일권',
+      flex3: '선택 3일권'
+    };
+
+    const won = new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW', maximumFractionDigits: 0 });
+    const rowsEl = document.getElementById('tripRows');
+    const template = document.getElementById('tripRowTemplate');
+    const ageTypeEl = document.getElementById('ageType');
+    const passTypeEl = document.getElementById('passType');
+    const passPriceSummaryEl = document.getElementById('passPriceSummary');
+    const inputHintEl = document.getElementById('inputHint');
+    const appShell = document.querySelector('main');
+    const themeToggleEl = document.getElementById('themeToggle');
+    const leaderboardEl = document.getElementById('leaderboard');
+    const stickyWinnerNameEl = document.getElementById('stickyWinnerName');
+    const stickyWinnerTotalEl = document.getElementById('stickyWinnerTotal');
+    const stickyWinnerDeltaEl = document.getElementById('stickyWinnerDelta');
+    let leaderboardInView = true;
+    let latestOptions = [];
+    let chart;
+
+    function getPassPrice(passType = passTypeEl.value, ageType = ageTypeEl.value) {
+      return passPrices[ageType][passType];
+    }
+
+    function storedTheme() {
+      try {
+        return localStorage.getItem('naeilro-theme');
+      } catch {
+        return null;
+      }
+    }
+
+    function saveTheme(theme) {
+      try {
+        localStorage.setItem('naeilro-theme', theme);
+      } catch {
+        // Ignore storage failures in restricted browser contexts.
+      }
+    }
+
+    function currentTheme() {
+      return document.body.classList.contains('theme-dark') ? 'dark' : 'light';
+    }
+
+    function themeColors() {
+      const dark = currentTheme() === 'dark';
+      return {
+        winner: '#00A79D',
+        normal: dark ? '#38BDF8' : '#005BAC',
+        muted: dark ? '#64748B' : '#98A2B3',
+        tick: dark ? '#CBD5E1' : '#475467',
+        grid: dark ? 'rgba(148, 163, 184, 0.18)' : 'rgba(152, 162, 179, 0.18)'
+      };
+    }
+
+    function applyTheme(theme) {
+      const dark = theme === 'dark';
+      document.body.classList.toggle('theme-dark', dark);
+      themeToggleEl.textContent = dark ? '화이트모드' : '다크모드';
+      themeToggleEl.setAttribute('aria-pressed', String(dark));
+      saveTheme(theme);
+      if (latestOptions.length) renderChart(latestOptions);
+    }
+
+    function setChoiceState(group) {
+      const target = document.getElementById(group.dataset.target);
+      group.querySelectorAll('.choice').forEach((button) => {
+        const active = button.dataset.value === target.value;
+        button.className = `choice h-9 rounded px-3 text-sm font-black transition ${active ? 'bg-white text-rail shadow-sm' : 'text-slate-500 hover:text-ink'}`;
+      });
+    }
+
+    function updatePassPriceSummary() {
+      const age = ageTypeEl.value;
+      passPriceSummaryEl.textContent = `${won.format(passPrices[age][passTypeEl.value])}`;
+      document.querySelectorAll('.choice-group').forEach(setChoiceState);
+    }
+
+    function scheduleAnalysis() {
+      window.clearTimeout(scheduleAnalysis.timer);
+      scheduleAnalysis.timer = window.setTimeout(runAnalysis, 120);
+    }
+
+    function applyResponsiveState(width = window.innerWidth) {
+      const measuredWidth = Math.min(width, document.documentElement.clientWidth || width);
+      document.body.classList.toggle('is-compact', measuredWidth < 1100);
+      document.body.classList.toggle('is-narrow', measuredWidth < 640);
+      updateStickyLeaderboardVisibility();
+      if (chart) {
+        window.clearTimeout(applyResponsiveState.chartTimer);
+        applyResponsiveState.chartTimer = window.setTimeout(() => {
+          chart.resize();
+          chart.update('none');
+        }, 80);
+      }
+    }
+
+    function addTrip(defaults = {}) {
+      const row = template.content.firstElementChild.cloneNode(true);
+      row.querySelector('.day').value = defaults.day || Math.min(rowsEl.children.length + 1, 7);
+      row.querySelector('.train').value = defaults.train || 'KTX';
+      row.querySelector('.origin-input').value = defaults.origin || '서울';
+      row.querySelector('.destination-input').value = defaults.destination || '부산';
+      updateRowFare(row);
+      row.querySelector('.remove').addEventListener('click', () => {
+        row.remove();
+        updateInputHint();
+        runAnalysis();
+      });
+      row.querySelectorAll('input, select').forEach((field) => {
+        field.addEventListener('input', () => {
+          updateRowFare(row);
+          scheduleAnalysis();
+        });
+        field.addEventListener('change', () => {
+          updateRowFare(row);
+          scheduleAnalysis();
+        });
+      });
+      row.querySelectorAll('.station-input').forEach((input) => setupStationCombo(input));
+      rowsEl.appendChild(row);
+      updateInputHint();
+    }
+
+    function updateInputHint() {
+      const trips = collectTrips();
+      const fare = trips.reduce((sum, trip) => sum + trip.fare, 0);
+      inputHintEl.textContent = `${rowsEl.children.length}개 행 · 자동 산정 운임 ${won.format(fare)}`;
+    }
+
+    function collectTrips() {
+      return [...rowsEl.querySelectorAll('.trip-row')].map((row, index) => ({
+        id: index + 1,
+        day: Number(row.querySelector('.day').value),
+        train: row.querySelector('.train').value,
+        origin: normalizeStationName(row.querySelector('.origin-input').value),
+        destination: normalizeStationName(row.querySelector('.destination-input').value),
+        memo: `${normalizeStationName(row.querySelector('.origin-input').value)} → ${normalizeStationName(row.querySelector('.destination-input').value)}`
+      })).map((trip) => ({
+        ...trip,
+        fare: getAutoFare(trip.origin, trip.destination, trip.train)
+      })).filter((trip) => trip.fare > 0);
+    }
+
+    function findStationGroup(station) {
+      for (const groupName in ktxNetwork) {
+        if (ktxNetwork[groupName][station] !== undefined) return groupName;
+      }
+      return '';
+    }
+
+    function calculateFareByDistance(distance, trainType = 'KTX') {
+      const rate = trainType === 'KTX' ? 141 : 92;
+      const minimumFare = trainType === 'KTX' ? 8400 : 4800;
+      const calculatedFare = Math.round((distance * rate) / 100) * 100;
+      return Math.max(minimumFare, calculatedFare);
+    }
+
+    function getNetworkDistance(startStation, endStation) {
+      if (startStation === endStation) return 0;
+      const startGroup = findStationGroup(startStation);
+      const endGroup = findStationGroup(endStation);
+      if (!startGroup || !endGroup) return null;
+
+      if (startGroup === endGroup) {
+        const group = ktxNetwork[startGroup];
+        return Math.abs(group[endStation] - group[startStation]);
+      }
+
+      const westStation = startGroup === '서부계통' ? startStation : endStation;
+      const eastStation = startGroup === '동부계통' ? startStation : endStation;
+      return Math.abs(ktxNetwork.서부계통[westStation]) + Math.abs(ktxNetwork.동부계통[eastStation]);
+    }
+
+    function getKtxFare31(startStation, endStation) {
+      if (startStation === endStation) return 0;
+      const startGroup = findStationGroup(startStation);
+      const endGroup = findStationGroup(endStation);
+      if (!startGroup || !endGroup) return 35000;
+      if (startGroup !== endGroup) {
+        const westStation = startGroup === '서부계통' ? startStation : endStation;
+        const eastStation = startGroup === '동부계통' ? startStation : endStation;
+        const westFare = calculateFareByDistance(Math.abs(ktxNetwork.서부계통[westStation]), 'KTX');
+        const eastFare = calculateFareByDistance(Math.abs(ktxNetwork.동부계통[eastStation]), 'KTX');
+        return westFare + eastFare;
+      }
+      const distance = getNetworkDistance(startStation, endStation);
+      if (distance === null) return 35000;
+      return calculateFareByDistance(distance, 'KTX');
+    }
+
+    function getAutoFare(startStation, endStation, trainType) {
+      const distance = getNetworkDistance(startStation, endStation);
+      if (distance === null) return trainType === 'KTX' ? 35000 : 22000;
+      if (trainType === 'KTX') return getKtxFare31(startStation, endStation);
+      return calculateFareByDistance(distance, 'REGULAR');
+    }
+
+    function updateRowFare(row) {
+      const origin = normalizeStationName(row.querySelector('.origin-input').value);
+      const destination = normalizeStationName(row.querySelector('.destination-input').value);
+      const train = row.querySelector('.train').value;
+      const fare = getAutoFare(origin, destination, train);
+      const display = row.querySelector('.fare-display');
+      display.textContent = fare > 0 ? won.format(fare) : '0원';
+      display.title = `${origin} → ${destination} 자동 산정 운임`;
+    }
+
+    function normalizeStationName(value) {
+      const station = value.trim();
+      return station || '미선택';
+    }
+
+    function setupStationCombo(input) {
+      const combo = input.closest('.station-combo');
+      const menu = combo.querySelector('.station-menu');
+
+      const open = () => {
+        renderStationMenu(input, menu);
+        menu.classList.remove('hidden');
+      };
+
+      input.addEventListener('focus', open);
+      input.addEventListener('input', open);
+      input.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') menu.classList.add('hidden');
+      });
+    }
+
+    function renderStationMenu(input, menu) {
+      const query = input.value.trim().toLowerCase();
+      const matches = stations
+        .filter((station) => !query || station.toLowerCase().includes(query))
+        .slice(0, 31);
+
+      menu.innerHTML = '';
+      matches.forEach((station) => {
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'block w-full rounded px-3 py-2 text-left text-sm font-black text-slate-700 hover:bg-teal/10 hover:text-teal';
+        item.textContent = station;
+        item.addEventListener('mousedown', (event) => {
+          event.preventDefault();
+          input.value = station;
+          menu.classList.add('hidden');
+          scheduleAnalysis();
+        });
+        menu.appendChild(item);
+      });
+
+      if (!matches.length) {
+        const empty = document.createElement('div');
+        empty.className = 'px-3 py-2 text-sm font-bold text-slate-500';
+        empty.textContent = '일치하는 역이 없습니다';
+        menu.appendChild(empty);
+      }
+    }
+
+    function analyzeTrips(trips, passType = passTypeEl.value, ageType = ageTypeEl.value) {
+      const normalTotal = trips.reduce((sum, trip) => sum + trip.fare, 0);
+      const benefits = new Map();
+      const ktxTrips = trips.filter((trip) => trip.train === 'KTX').sort((a, b) => b.fare - a.fare);
+      const ktxUsedDays = new Set();
+      let ktxTotalUsed = 0;
+
+      ktxTrips.forEach((trip) => {
+        if (ktxUsedDays.has(trip.day)) {
+          benefits.set(trip.id, { applied: false, reason: 'KTX 1일 최대 1회 초과', chargedFare: trip.fare });
+          return;
+        }
+        if (ktxTotalUsed >= 2) {
+          benefits.set(trip.id, { applied: false, reason: 'KTX 총 2회 초과', chargedFare: trip.fare });
+          return;
+        }
+        ktxUsedDays.add(trip.day);
+        ktxTotalUsed += 1;
+        benefits.set(trip.id, { applied: true, reason: `KTX 혜택 적용 (${ktxTotalUsed}/2)`, chargedFare: 0 });
+      });
+
+      const regularByDay = new Map();
+      trips.filter((trip) => trip.train === 'REGULAR').forEach((trip) => {
+        if (!regularByDay.has(trip.day)) regularByDay.set(trip.day, []);
+        regularByDay.get(trip.day).push(trip);
+      });
+
+      regularByDay.forEach((dayTrips) => {
+        dayTrips.sort((a, b) => b.fare - a.fare).forEach((trip, index) => {
+          benefits.set(trip.id, index < 2
+            ? { applied: true, reason: `일반열차 혜택 적용 (${index + 1}/2)`, chargedFare: 0 }
+            : { applied: false, reason: '일반열차 1일 2회 초과', chargedFare: trip.fare });
+        });
+      });
+
+      const details = trips.map((trip) => ({ ...trip, benefit: benefits.get(trip.id) }));
+      const uncoveredFare = details.reduce((sum, trip) => sum + trip.benefit.chargedFare, 0);
+      const passPrice = getPassPrice(passType, ageType);
+      return { normalTotal, passTotal: passPrice + uncoveredFare, uncoveredFare, passPrice, details, ktxTotalUsed };
+    }
+
+    function buildOptions(trips) {
+      const age = ageTypeEl.value;
+      const normalTotal = trips.reduce((sum, trip) => sum + trip.fare, 0);
+      const flex = analyzeTrips(trips, 'flex3', age);
+      const consecutive = analyzeTrips(trips, 'consecutive7', age);
+      return [
+        { id: 'normal', name: '일반 승차권', type: '개별 예매', total: normalTotal },
+        { id: 'flex3', name: `내일로 ${passLabels[age]} 선택 3일권`, type: '패스', total: flex.passTotal },
+        { id: 'consecutive7', name: `내일로 ${passLabels[age]} 연속 7일권`, type: '패스', total: consecutive.passTotal }
+      ].sort((a, b) => a.total - b.total);
+    }
+
+    function renderLeaderboard(options) {
+      const board = leaderboardEl;
+      const normal = options.find((option) => option.id === 'normal');
+      board.innerHTML = '';
+
+      options.forEach((option, index) => {
+        const delta = option.total - normal.total;
+        const isWinner = index === 0;
+        const selected = option.id === passTypeEl.value || option.id === 'normal';
+        const deltaText = delta === 0 ? '기준' : delta < 0 ? `${won.format(Math.abs(delta))} 절약` : `${won.format(delta)} 높음`;
+        const row = document.createElement('div');
+        row.className = `grid gap-2 border-b border-line p-3 last:border-b-0 sm:grid-cols-[44px_1fr_120px_96px] sm:items-center ${isWinner ? 'bg-teal/10' : 'bg-white'}`;
+        row.innerHTML = `
+          <span class="flex h-9 w-9 items-center justify-center rounded-md ${isWinner ? 'bg-teal text-white' : 'bg-soft text-slate-600'} text-base font-black">${index + 1}</span>
+          <div>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <p class="font-black">${option.name}</p>
+              ${isWinner ? '<span class="rounded-full bg-teal px-2 py-0.5 text-[11px] font-black text-white">BEST</span>' : ''}
+              ${selected ? '<span class="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-black text-slate-600">표시</span>' : ''}
+            </div>
+            <p class="mt-0.5 text-xs font-bold text-slate-500">${option.type}</p>
+          </div>
+          <p class="text-lg font-black sm:text-right">${won.format(option.total)}</p>
+          <p class="text-sm font-black ${delta < 0 ? 'text-teal' : delta > 0 ? 'text-caution' : 'text-slate-500'} sm:text-right">${deltaText}</p>
+        `;
+        board.appendChild(row);
+      });
+
+      document.getElementById('leaderboardMeta').textContent = `${options.length}개 비교`;
+      renderStickyLeaderboard(options);
+    }
+
+    function renderStickyLeaderboard(options) {
+      latestOptions = options;
+      if (!options.length) return;
+      const winner = options[0];
+      const normal = options.find((option) => option.id === 'normal');
+      const delta = winner.total - normal.total;
+      stickyWinnerNameEl.textContent = winner.name;
+      stickyWinnerTotalEl.textContent = won.format(winner.total);
+      stickyWinnerDeltaEl.textContent = delta === 0 ? '기준 금액' : delta < 0 ? `${won.format(Math.abs(delta))} 절약` : `${won.format(delta)} 높음`;
+      stickyWinnerDeltaEl.className = `text-xs font-black ${delta <= 0 ? 'text-teal' : 'text-caution'}`;
+      updateStickyLeaderboardVisibility();
+    }
+
+    function updateStickyLeaderboardVisibility() {
+      const shouldShow = latestOptions.length > 0 && !leaderboardInView;
+      document.body.classList.toggle('show-sticky-board', shouldShow);
+    }
+
+    function renderReport(result) {
+      const container = document.getElementById('detailReport');
+      container.innerHTML = '';
+      result.details.sort((a, b) => a.day - b.day || a.id - b.id).forEach((trip) => {
+        const trainLabel = trip.train === 'KTX' ? 'KTX' : '일반열차';
+        const memo = trip.memo ? ` · ${trip.memo}` : '';
+        const appliedClass = trip.benefit.applied ? 'border-teal/30 bg-teal/10' : 'border-amber-200 bg-amber-50';
+        const item = document.createElement('div');
+        item.className = `rounded-md border p-3 ${appliedClass}`;
+        item.innerHTML = `
+          <p class="text-xs font-black ${trip.benefit.applied ? 'text-teal' : 'text-caution'}">${trip.benefit.applied ? '무료 처리' : '운임 부과'}</p>
+          <p class="mt-1 font-bold text-slate-800">${trip.day}일차 ${trainLabel}${memo}</p>
+          <p class="mt-0.5 text-xs font-semibold text-slate-600">${trip.benefit.reason} · ${trip.benefit.applied ? `${won.format(trip.fare)} → 0원` : `${won.format(trip.fare)} 부과`}</p>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function renderUsage(result) {
+      document.getElementById('ktxUsage').textContent = `${result.ktxTotalUsed} / 2`;
+      document.getElementById('uncoveredFare').textContent = won.format(result.uncoveredFare);
+      const dayUsage = document.getElementById('dayUsage');
+      dayUsage.innerHTML = '';
+      for (let day = 1; day <= 7; day += 1) {
+        const dayTrips = result.details.filter((trip) => trip.day === day);
+        if (dayTrips.length === 0) continue;
+        const freeCount = dayTrips.filter((trip) => trip.benefit.applied).length;
+        const charged = dayTrips.reduce((sum, trip) => sum + trip.benefit.chargedFare, 0);
+        const item = document.createElement('div');
+        item.className = 'flex items-center justify-between rounded-md border border-line bg-soft px-3 py-2 text-sm';
+        item.innerHTML = `<span class="font-black">${day}일차</span><span class="font-bold text-slate-600">무료 ${freeCount}건 · 부과 ${won.format(charged)}</span>`;
+        dayUsage.appendChild(item);
+      }
+    }
+
+    function renderRecommendation(result, options) {
+      const traveler = document.getElementById('travelerName').value.trim() || '여행객';
+      const selectedPassName = `내일로 ${passLabels[ageTypeEl.value]} ${passLabels[passTypeEl.value]}`;
+      const normalOption = options.find((option) => option.id === 'normal');
+      const winner = options[0];
+      const selectedDiff = result.passTotal - result.normalTotal;
+
+      document.getElementById('normalTotal').textContent = won.format(result.normalTotal);
+      document.getElementById('passTotal').textContent = won.format(result.passTotal);
+      document.getElementById('savingBadge').textContent = selectedDiff < 0 ? `${won.format(Math.abs(selectedDiff))}↓` : selectedDiff > 0 ? `${won.format(selectedDiff)}↑` : '0원';
+
+      if (winner.id === 'normal') {
+        document.getElementById('resultTitle').textContent = '일반 예매가 1위';
+        document.getElementById('resultMessage').textContent = `${traveler}님 일정에서는 개별 예매가 가장 낮습니다. ${selectedPassName}은 일반 예매 대비 ${won.format(Math.max(0, selectedDiff))} 높게 계산됩니다.`;
+      } else {
+        const save = normalOption.total - winner.total;
+        document.getElementById('resultTitle').textContent = `${winner.name} 1위`;
+        document.getElementById('resultMessage').textContent = `${traveler}님은 ${winner.name}이 일반 예매보다 ${won.format(save)} 유리합니다.`;
+      }
+    }
+
+    function renderChart(options) {
+      const canvas = document.getElementById('comparisonChart');
+      const fallback = document.getElementById('chartFallback');
+      if (!window.Chart) {
+        canvas.classList.add('hidden');
+        fallback.classList.remove('hidden');
+        return;
+      }
+      const colors = themeColors();
+
+      const data = {
+        labels: options.map((option) => option.name.replace('내일로 ', '')),
+        datasets: [{
+          label: '총지출',
+          data: options.map((option) => option.total),
+          backgroundColor: options.map((option, index) => index === 0 ? colors.winner : option.id === 'normal' ? colors.normal : colors.muted),
+          borderRadius: 5,
+          maxBarThickness: 46
+        }]
+      };
+      const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (context) => won.format(context.raw) } } },
+        scales: {
+          x: { ticks: { color: colors.tick, font: { weight: '700' } }, grid: { display: false } },
+          y: { beginAtZero: true, ticks: { color: colors.tick, callback: (value) => `${Number(value).toLocaleString('ko-KR')}원` }, grid: { color: colors.grid } }
+        }
+      };
+
+      if (chart) {
+        chart.data = data;
+        chart.options = chartOptions;
+        chart.update();
+        return;
+      }
+      chart = new Chart(canvas, { type: 'bar', data, options: chartOptions });
+    }
+
+    function showValidation(message) {
+      document.getElementById('resultTitle').textContent = '입력값 확인';
+      document.getElementById('resultMessage').textContent = message;
+      document.getElementById('leaderboard').innerHTML = `<div class="bg-red-50 p-3 text-sm font-bold text-red-700">${message}</div>`;
+      document.getElementById('detailReport').innerHTML = '';
+    }
+
+    function runAnalysis() {
+      updateInputHint();
+      const trips = collectTrips();
+      if (trips.length === 0) {
+        showValidation('운임이 입력된 탑승 일정을 1개 이상 추가해야 합니다.');
+        return;
+      }
+      const result = analyzeTrips(trips);
+      const options = buildOptions(trips);
+      renderRecommendation(result, options);
+      renderLeaderboard(options);
+      renderChart(options);
+      renderUsage(result);
+      renderReport(result);
+    }
+
+    document.querySelectorAll('.choice-group').forEach((group) => {
+      group.addEventListener('click', (event) => {
+        const button = event.target.closest('.choice');
+        if (!button) return;
+        document.getElementById(group.dataset.target).value = button.dataset.value;
+        updatePassPriceSummary();
+        runAnalysis();
+      });
+    });
+    themeToggleEl.addEventListener('click', () => {
+      applyTheme(currentTheme() === 'dark' ? 'light' : 'dark');
+    });
+    document.getElementById('travelerName').addEventListener('input', scheduleAnalysis);
+    window.addEventListener('resize', () => applyResponsiveState());
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', () => applyResponsiveState(window.visualViewport.width));
+    }
+    if (window.ResizeObserver) {
+      new ResizeObserver((entries) => {
+        const width = entries[0]?.contentRect?.width || window.innerWidth;
+        applyResponsiveState(width);
+      }).observe(appShell);
+    }
+    if (window.IntersectionObserver) {
+      new IntersectionObserver((entries) => {
+        leaderboardInView = entries[0]?.isIntersecting ?? true;
+        updateStickyLeaderboardVisibility();
+      }, { threshold: 0.12 }).observe(leaderboardEl);
+    }
+    document.getElementById('addTrip').addEventListener('click', () => {
+      addTrip();
+      runAnalysis();
+    });
+    document.getElementById('analyze').addEventListener('click', runAnalysis);
+    document.addEventListener('mousedown', (event) => {
+      document.querySelectorAll('.station-combo').forEach((combo) => {
+        if (!combo.contains(event.target)) combo.querySelector('.station-menu').classList.add('hidden');
+      });
+    });
+
+    applyTheme(storedTheme() || (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+    updatePassPriceSummary();
+    applyResponsiveState();
+    window.setInterval(() => applyResponsiveState(), 700);
+    addTrip({ day: 1, train: 'KTX', origin: '서울', destination: '부산' });
+    addTrip({ day: 2, train: 'REGULAR', origin: '부산', destination: '순천' });
+    addTrip({ day: 3, train: 'KTX', origin: '순천', destination: '서울' });
+    runAnalysis();
+  </script>
+</body>
+</html>
