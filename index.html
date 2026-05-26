@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>내일로 패스 리더보드</title>
+  <title>내일로 패스 가성비 리더보드</title>
+  <!-- Tailwind CSS & Chart.js 로드 -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
@@ -11,126 +12,115 @@
       theme: {
         extend: {
           colors: {
-            ink: '#101828',
-            rail: '#005BAC',
-            teal: '#00A79D',
-            line: '#D0D5DD',
+            ink: '#0F172A',
+            rail: '#1E40AF',
+            teal: '#0D9488',
+            line: '#E2E8F0',
             soft: '#F8FAFC',
-            caution: '#B54708'
+            caution: '#EA580C'
           },
           boxShadow: {
-            lift: '0 14px 35px rgba(16, 24, 40, 0.08)'
+            lift: '0 20px 40px rgba(15, 23, 42, 0.06)',
+            neon: '0 0 20px rgba(13, 148, 136, 0.2)'
           }
         }
       }
     };
   </script>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800;900&display=swap');
     body {
-      transition: background-color 180ms ease, color 180ms ease;
+      font-family: 'Pretendard', system-ui, -apple-system, sans-serif;
+      transition: background-color 200ms ease, color 200ms ease;
     }
 
+    /* 프리미엄 다크모드 고유 스타일 */
     body.theme-dark {
-      background: radial-gradient(circle at top left, rgba(0, 167, 157, 0.16), transparent 30%),
-        linear-gradient(135deg, #08111f 0%, #0f172a 48%, #111827 100%) !important;
-      color: #e5e7eb !important;
+      background: radial-gradient(circle at 0% 0%, rgba(13, 148, 136, 0.12), transparent 40%),
+                  linear-gradient(135deg, #0B0F19 0%, #0F172A 100%) !important;
+      color: #F1F5F9 !important;
     }
-
     body.theme-dark .bg-white,
     body.theme-dark header {
-      background-color: rgba(15, 23, 42, 0.88) !important;
+      background-color: #131C2E !important;
+      border-color: rgba(148, 163, 184, 0.15) !important;
     }
-
     body.theme-dark .bg-soft,
     body.theme-dark .bg-slate-100 {
-      background-color: rgba(30, 41, 59, 0.82) !important;
+      background-color: #1E293B !important;
     }
-
     body.theme-dark .bg-ink {
-      background: linear-gradient(145deg, #020617 0%, #111827 55%, #0f766e 145%) !important;
+      background: linear-gradient(135deg, #030712 0%, #111827 100%) !important;
+      border: 1px solid rgba(20, 184, 166, 0.2);
     }
-
     body.theme-dark .text-ink,
     body.theme-dark .text-slate-800,
     body.theme-dark .text-slate-700,
     body.theme-dark .text-slate-600 {
-      color: #e5e7eb !important;
+      color: #E2E8F0 !important;
     }
-
     body.theme-dark .text-slate-500 {
-      color: #94a3b8 !important;
+      color: #94A3B8 !important;
     }
-
     body.theme-dark .text-slate-400,
     body.theme-dark .text-slate-300 {
-      color: #cbd5e1 !important;
+      color: #CBD5E1 !important;
     }
-
     body.theme-dark .border-line,
     body.theme-dark .border {
-      border-color: rgba(148, 163, 184, 0.26) !important;
+      border-color: rgba(226, 232, 240, 0.1) !important;
     }
-
     body.theme-dark input,
     body.theme-dark select,
     body.theme-dark button.bg-white {
-      background-color: rgba(15, 23, 42, 0.92) !important;
-      color: #f8fafc !important;
-      border-color: rgba(148, 163, 184, 0.32) !important;
+      background-color: #0F172A !important;
+      color: #F8FAFC !important;
+      border-color: rgba(148, 163, 184, 0.25) !important;
     }
-
     body.theme-dark input::placeholder {
-      color: #64748b;
+      color: #475569;
     }
-
     body.theme-dark .station-menu {
-      background-color: #0f172a !important;
-      box-shadow: 0 18px 34px rgba(0, 0, 0, 0.42) !important;
+      background-color: #1E293B !important;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5) !important;
     }
-
     body.theme-dark .shadow-lift {
-      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28) !important;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.3) !important;
     }
-
     body.theme-dark #stickyLeaderboard {
-      background-color: rgba(15, 23, 42, 0.94) !important;
+      background-color: rgba(19, 28, 46, 0.95) !important;
     }
-
     body.theme-dark .bg-teal\/10 {
-      background-color: rgba(20, 184, 166, 0.16) !important;
+      background-color: rgba(13, 148, 136, 0.15) !important;
     }
 
+    /* 컴팩트 반응형 브레이크포인트 */
     body.is-compact #mainGrid {
       grid-template-columns: 1fr !important;
     }
-
     body.is-compact #schedulePanel {
       order: 2 !important;
     }
-
     body.is-compact #resultPanel {
       order: 1 !important;
       position: static !important;
     }
 
     body.is-narrow .trip-row {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+      grid-template-columns: 1fr !important;
+      gap: 1rem !important;
     }
-
     body.is-narrow .trip-route,
     body.is-narrow .remove {
-      grid-column: 1 / -1 !important;
+      grid-column: span 1 / span 1 !important;
     }
-
     body.is-narrow #summaryGrid {
       grid-template-columns: 1fr !important;
     }
-
     body.is-narrow #scheduleActions {
       display: grid !important;
       grid-template-columns: 1fr 1fr !important;
     }
-
     body.is-narrow #comparisonWrap {
       height: 12rem !important;
     }
@@ -142,21 +132,30 @@
     }
   </style>
 </head>
-<body class="bg-soft text-ink">
-  <main class="min-h-screen">
-    <header class="border-b border-line bg-white">
-      <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6">
-        <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p class="text-xs font-black uppercase tracking-[0.2em] text-rail">Naeilro Fare Board</p>
-            <h1 class="mt-1 text-2xl font-black tracking-tight md:text-3xl">내일로 패스 구매 리더보드</h1>
-          </div>
-          <div class="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-center">
-            <div class="grid grid-cols-2 gap-2 text-xs font-bold text-slate-600 sm:w-[390px]">
-              <div class="rounded-md border border-line bg-soft px-3 py-2">KTX 총 2회 · 1일 1회</div>
-              <div class="rounded-md border border-line bg-soft px-3 py-2">일반열차 1일 2회</div>
+<body class="bg-soft text-ink transition-colors duration-200">
+  <main class="min-h-screen pb-16">
+    <!-- 헤더 바 -->
+    <header class="border-b border-line bg-white shadow-sm">
+      <div class="mx-auto max-w-7xl px-4 py-5 sm:px-6">
+        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div class="flex items-center gap-3">
+            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-rail text-white shadow-md">
+              <!-- 기차 아이콘 SVG -->
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
             </div>
-            <button id="themeToggle" type="button" class="h-10 rounded-md border border-line bg-white px-4 text-sm font-black text-ink hover:border-rail hover:text-rail" aria-pressed="false">
+            <div>
+              <p class="text-[11px] font-black uppercase tracking-[0.25em] text-rail">Smart Transit Planner</p>
+              <h1 class="text-2xl font-black tracking-tight">내일로 패스 가성비 리더보드</h1>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="flex items-center gap-2 text-xs font-bold text-slate-600">
+              <span class="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-1 text-slate-700">KTX 총 2회 / 1일 1회</span>
+              <span class="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-1 text-slate-700">일반열차 1일 2회</span>
+            </div>
+            <button id="themeToggle" type="button" class="h-10 rounded-xl border border-line bg-white px-4 text-sm font-bold text-ink hover:border-rail hover:text-rail transition">
               다크모드
             </button>
           </div>
@@ -164,147 +163,166 @@
       </div>
     </header>
 
-    <section class="mx-auto max-w-7xl px-4 py-4 sm:px-6">
-      <section class="rounded-lg border border-line bg-white p-3 shadow-lift md:p-4">
-        <div class="grid gap-3 lg:grid-cols-[220px_1fr_1fr_auto] lg:items-end">
+    <section class="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+      <!-- 상단 컨트롤러 -->
+      <section class="rounded-2xl border border-line bg-white p-5 shadow-lift">
+        <div class="grid gap-4 lg:grid-cols-[1.2fr_1.5fr_1.5fr_1fr] lg:items-end">
           <label class="block">
-            <span class="text-xs font-black text-slate-500">여행자</span>
-            <input id="travelerName" type="text" value="여행객" class="mt-1 h-10 w-full rounded-md border border-line px-3 text-sm font-semibold outline-none focus:border-rail focus:ring-2 focus:ring-rail/20" />
+            <span class="text-xs font-bold text-slate-500">여행자 이름</span>
+            <input id="travelerName" type="text" value="여행객" class="mt-1.5 h-11 w-full rounded-xl border border-line px-4 text-sm font-semibold outline-none focus:border-rail focus:ring-2 focus:ring-rail/20" />
           </label>
 
           <div>
-            <p class="text-xs font-black text-slate-500">연령 구분</p>
+            <p class="text-xs font-bold text-slate-500">연령대 선택</p>
             <input id="ageType" type="hidden" value="YOUTH" />
-            <div class="choice-group mt-1 grid grid-cols-2 gap-1 rounded-md bg-slate-100 p-1" data-target="ageType">
-              <button type="button" data-value="YOUTH" class="choice h-9 rounded px-3 text-sm font-black">YOUTH</button>
-              <button type="button" data-value="ADULT" class="choice h-9 rounded px-3 text-sm font-black">ADULT</button>
+            <div class="choice-group mt-1.5 grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1" data-target="ageType">
+              <button type="button" data-value="YOUTH" class="choice h-9 rounded-lg text-sm font-bold">YOUTH (만 29세 이하)</button>
+              <button type="button" data-value="ADULT" class="choice h-9 rounded-lg text-sm font-bold">ADULT (제한 없음)</button>
             </div>
           </div>
 
           <div>
-            <p class="text-xs font-black text-slate-500">기준 패스</p>
+            <p class="text-xs font-bold text-slate-500">기준 패스 유형</p>
             <input id="passType" type="hidden" value="flex3" />
-            <div class="choice-group mt-1 grid grid-cols-2 gap-1 rounded-md bg-slate-100 p-1" data-target="passType">
-              <button type="button" data-value="flex3" class="choice h-9 rounded px-3 text-sm font-black">선택 3일권</button>
-              <button type="button" data-value="consecutive7" class="choice h-9 rounded px-3 text-sm font-black">연속 7일권</button>
+            <div class="choice-group mt-1.5 grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1" data-target="passType">
+              <button type="button" data-value="flex3" class="choice h-9 rounded-lg text-sm font-bold">선택 3일권</button>
+              <button type="button" data-value="consecutive7" class="choice h-9 rounded-lg text-sm font-bold">연속 7일권</button>
             </div>
           </div>
 
-          <div class="rounded-md border border-line bg-soft px-3 py-2 lg:min-w-[210px]">
-            <p class="text-[11px] font-black text-slate-500">패스 가격</p>
-            <p id="passPriceSummary" class="mt-0.5 text-sm font-black text-ink"></p>
+          <div class="rounded-xl border border-line bg-soft p-3">
+            <p class="text-[11px] font-bold text-slate-500">비교 기준 패스 요금</p>
+            <p id="passPriceSummary" class="mt-1 text-lg font-black text-rail"></p>
           </div>
         </div>
       </section>
 
-      <section id="mainGrid" class="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(420px,0.9fr)]">
-        <section id="schedulePanel" class="order-2 rounded-lg border border-line bg-white shadow-lift xl:order-1">
-          <div class="flex flex-col gap-3 border-b border-line p-3 sm:flex-row sm:items-center sm:justify-between md:p-4">
+      <!-- 양방 분할 그리드 -->
+      <section id="mainGrid" class="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_390px]">
+        <!-- 좌측: 탑승 일정 등록 패널 -->
+        <section id="schedulePanel" class="order-2 rounded-2xl border border-line bg-white shadow-lift xl:order-1 overflow-hidden">
+          <div class="flex flex-col gap-4 border-b border-line p-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 class="text-xl font-black">탑승 일정</h2>
-              <p id="inputHint" class="mt-0.5 text-sm font-bold text-slate-500"></p>
-              <p class="mt-1 text-xs font-bold text-slate-500">운임은 O/D 거리망으로 자동 추정됩니다.</p>
+              <h2 class="text-xl font-black">나의 여행 일정 관리</h2>
+              <p id="inputHint" class="mt-1 text-sm font-bold text-slate-500"></p>
             </div>
             <div id="scheduleActions" class="grid grid-cols-2 gap-2 sm:flex">
-              <button id="addTrip" type="button" class="h-10 rounded-md bg-ink px-4 text-sm font-black text-white hover:bg-slate-700">일정 추가</button>
-              <button id="analyze" type="button" class="h-10 rounded-md bg-teal px-4 text-sm font-black text-white hover:bg-teal-700">갱신</button>
+              <button id="addTrip" type="button" class="h-11 rounded-xl bg-ink px-5 text-sm font-bold text-white hover:bg-slate-800 transition">일정 추가</button>
+              <button id="analyze" type="button" class="h-11 rounded-xl bg-teal px-5 text-sm font-bold text-white hover:bg-teal-700 transition">순위 계산</button>
             </div>
           </div>
 
-          <div class="hidden border-b border-line bg-soft px-4 py-2 text-xs font-black uppercase text-slate-500 md:grid md:grid-cols-[82px_120px_132px_minmax(260px,1fr)_64px] md:gap-2">
-            <span>Day</span>
-            <span>Train</span>
-            <span class="text-right">Auto Fare</span>
-            <span>Origin / Destination</span>
+          <!-- 테이블 헤더 (대화형) -->
+          <div class="hidden border-b border-line bg-soft px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-400 md:grid md:grid-cols-[90px_130px_130px_minmax(260px,1fr)_70px] md:gap-3">
+            <span>여행 일차</span>
+            <span>열차 구분</span>
+            <span class="text-right">추정 정상가</span>
+            <span>출발역 ↔ 도착역 선택</span>
             <span></span>
           </div>
+
+          <!-- 동적 바인딩 로우 컨테이너 -->
           <div id="tripRows" class="divide-y divide-line"></div>
         </section>
 
-        <section id="resultPanel" class="order-1 space-y-4 xl:sticky xl:top-4 xl:order-2 xl:self-start">
-          <section id="heroResult" class="overflow-hidden rounded-lg border border-line bg-ink text-white shadow-lift">
-            <div class="p-4 md:p-5">
-              <p class="text-xs font-black uppercase tracking-[0.2em] text-teal">Current Winner</p>
-              <h2 id="resultTitle" class="mt-2 text-3xl font-black tracking-tight md:text-4xl">리더보드 대기 중</h2>
-              <p id="resultMessage" class="mt-3 text-sm font-semibold leading-6 text-slate-300"></p>
-              <div id="summaryGrid" class="mt-4 grid gap-2 sm:grid-cols-3">
-                <div class="min-w-0 rounded-md bg-white/10 p-3">
-                  <p class="text-[11px] font-black text-slate-300">일반</p>
-                  <p id="normalTotal" class="mt-1 break-words text-lg font-black md:text-xl">0원</p>
+        <!-- 우측: 분석 결과 리포트 & 실시간 리더보드 -->
+        <section id="resultPanel" class="order-1 space-y-6 xl:sticky xl:top-6 xl:order-2 xl:self-start">
+          <!-- 최적 상품 안내 카드 (Hero) -->
+          <section id="heroResult" class="overflow-hidden rounded-2xl border border-line bg-ink text-white shadow-lift transition duration-200">
+            <div class="p-5">
+              <div class="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-teal">
+                <span class="h-2 w-2 rounded-full bg-teal animate-pulse"></span>
+                Optimal Choice
+              </div>
+              <h2 id="resultTitle" class="mt-2.5 text-2xl font-black tracking-tight leading-tight">리더보드 계산 대기 중</h2>
+              <p id="resultMessage" class="mt-2 text-sm text-slate-300 leading-relaxed"></p>
+
+              <!-- 주요 수치 요약 -->
+              <div id="summaryGrid" class="mt-5 grid gap-2.5 grid-cols-3">
+                <div class="rounded-xl bg-white/5 border border-white/5 p-3">
+                  <p class="text-[11px] font-bold text-slate-400">일반 총액</p>
+                  <p id="normalTotal" class="mt-1 text-lg font-black break-words">0원</p>
                 </div>
-                <div class="min-w-0 rounded-md bg-white/10 p-3">
-                  <p class="text-[11px] font-black text-slate-300">패스</p>
-                  <p id="passTotal" class="mt-1 break-words text-lg font-black md:text-xl">0원</p>
+                <div class="rounded-xl bg-white/5 border border-white/5 p-3">
+                  <p class="text-[11px] font-bold text-slate-400">패스 이용액</p>
+                  <p id="passTotal" class="mt-1 text-lg font-black break-words">0원</p>
                 </div>
-                <div class="min-w-0 rounded-md bg-white/10 p-3">
-                  <p class="text-[11px] font-black text-slate-300">차액</p>
-                  <p id="savingBadge" class="mt-1 break-words text-lg font-black md:text-xl">0원</p>
+                <div class="rounded-xl bg-white/5 border border-white/5 p-3">
+                  <p class="text-[11px] font-bold text-slate-400 font-bold">절약 비용</p>
+                  <p id="savingBadge" class="mt-1 text-lg font-black break-words text-teal">0원</p>
                 </div>
               </div>
             </div>
-            <div class="border-t border-white/10 bg-white/5 p-4">
-              <div id="comparisonWrap" class="h-48 sm:h-56">
-                <canvas id="comparisonChart" aria-label="총지출 비교 차트"></canvas>
-                <div id="chartFallback" class="hidden flex h-full items-center justify-center rounded-md bg-white/5 text-sm font-bold text-slate-300">차트 라이브러리를 불러오지 못했습니다.</div>
+
+            <!-- 그래프 컨테이너 -->
+            <div class="border-t border-white/5 bg-white/[0.02] p-4">
+              <div id="comparisonWrap" class="h-44 sm:h-48">
+                <canvas id="comparisonChart" aria-label="총지출 가성비 비교 차트"></canvas>
+                <div id="chartFallback" class="hidden flex h-full items-center justify-center rounded-xl bg-white/5 text-sm font-bold text-slate-300">차트 로드 실패</div>
               </div>
             </div>
           </section>
 
-          <section class="rounded-lg border border-line bg-white p-3 shadow-lift md:p-4">
-            <div class="flex items-end justify-between gap-2">
+          <!-- 구매 선택지 순위 리더보드 -->
+          <section class="rounded-2xl border border-line bg-white p-5 shadow-lift">
+            <div class="flex items-end justify-between gap-2 border-b border-line pb-3">
               <div>
-                <p class="text-xs font-black uppercase tracking-[0.16em] text-rail">Leaderboard</p>
-                <h2 class="mt-1 text-xl font-black">구매 선택지 순위</h2>
+                <p class="text-[10px] font-black uppercase tracking-[0.2em] text-rail">Leaderboard Ranking</p>
+                <h2 class="mt-0.5 text-lg font-black">최종 추천 순위</h2>
               </div>
-              <p id="leaderboardMeta" class="text-xs font-black text-slate-500">분석 전</p>
+              <p id="leaderboardMeta" class="text-xs font-bold text-slate-500">데이터 없음</p>
             </div>
-            <div id="leaderboard" class="mt-3 overflow-hidden rounded-lg border border-line"></div>
+            <div id="leaderboard" class="mt-4 overflow-hidden rounded-xl border border-line"></div>
           </section>
         </section>
       </section>
 
-      <section class="mt-4 grid gap-4 lg:grid-cols-[360px_1fr]">
-        <section class="rounded-lg border border-line bg-white p-3 shadow-lift md:p-4">
-          <h2 class="text-lg font-black">혜택 사용 현황</h2>
-          <div class="mt-3 grid grid-cols-2 gap-2">
-            <div class="rounded-md border border-line bg-soft p-3">
-              <p class="text-xs font-black text-slate-500">KTX 무료 처리</p>
-              <p id="ktxUsage" class="mt-1 text-2xl font-black">0 / 2</p>
+      <!-- 최하단 상세 분석 리포트 영역 -->
+      <section class="mt-6 grid gap-6 lg:grid-cols-[380px_1fr]">
+        <section class="rounded-2xl border border-line bg-white p-5 shadow-lift">
+          <h2 class="text-lg font-black">패스 혜택 소진 정보</h2>
+          <div class="mt-4 grid grid-cols-2 gap-3">
+            <div class="rounded-xl border border-line bg-soft p-4">
+              <p class="text-xs font-bold text-slate-500">KTX 무료 승차권</p>
+              <p id="ktxUsage" class="mt-2.5 text-3xl font-black">0 / 2</p>
             </div>
-            <div class="rounded-md border border-line bg-soft p-3">
-              <p class="text-xs font-black text-slate-500">혜택 제외 운임</p>
-              <p id="uncoveredFare" class="mt-1 text-2xl font-black">0원</p>
+            <div class="rounded-xl border border-line bg-soft p-4">
+              <p class="text-xs font-bold text-slate-500">패스 외 부담 운임</p>
+              <p id="uncoveredFare" class="mt-2.5 text-3xl font-black">0원</p>
             </div>
           </div>
-          <div id="dayUsage" class="mt-3 space-y-2"></div>
+          <div id="dayUsage" class="mt-4 space-y-2"></div>
         </section>
 
-        <section class="rounded-lg border border-line bg-white p-3 shadow-lift md:p-4">
-          <h2 class="text-lg font-black">판정 로그</h2>
-          <div id="detailReport" class="mt-3 grid gap-2 text-sm leading-6 md:grid-cols-2"></div>
+        <section class="rounded-2xl border border-line bg-white p-5 shadow-lift">
+          <h2 class="text-lg font-black">일차별 정밀 판정 로그</h2>
+          <div id="detailReport" class="mt-4 grid gap-3 text-sm leading-relaxed md:grid-cols-2"></div>
         </section>
       </section>
     </section>
   </main>
 
-  <aside id="stickyLeaderboard" class="fixed inset-x-0 bottom-0 z-40 translate-y-full border-t border-line bg-white/95 px-3 py-3 opacity-0 shadow-[0_-16px_36px_rgba(16,24,40,0.16)] backdrop-blur transition duration-200">
-    <div class="mx-auto flex max-w-7xl items-center gap-3">
+  <!-- 하단 플로팅 보드 -->
+  <aside id="stickyLeaderboard" class="fixed inset-x-0 bottom-0 z-40 translate-y-full border-t border-line bg-white/95 px-4 py-4.5 opacity-0 shadow-[0_-20px_40px_rgba(15,23,42,0.12)] backdrop-blur transition duration-300">
+    <div class="mx-auto flex max-w-7xl items-center gap-4">
       <div class="min-w-0 flex-1">
-        <p class="text-[11px] font-black uppercase tracking-[0.16em] text-rail">현재 1위</p>
-        <p id="stickyWinnerName" class="truncate text-sm font-black text-ink">분석 대기</p>
+        <p class="text-[10px] font-black uppercase tracking-widest text-rail">가성비 1순위 추천</p>
+        <p id="stickyWinnerName" class="truncate text-base font-black text-ink">분석 대기 중</p>
       </div>
       <div class="text-right">
-        <p id="stickyWinnerTotal" class="text-base font-black text-ink">0원</p>
-        <p id="stickyWinnerDelta" class="text-xs font-black text-teal">-</p>
+        <p id="stickyWinnerTotal" class="text-lg font-black text-ink">0원</p>
+        <p id="stickyWinnerDelta" class="text-xs font-bold text-teal">-</p>
       </div>
     </div>
   </aside>
 
+  <!-- 일정 템플릿 마크업 (boarding pass 디자인) -->
   <template id="tripRowTemplate">
-    <div class="trip-row grid grid-cols-2 gap-3 p-3 md:grid-cols-[82px_120px_132px_minmax(260px,1fr)_64px] md:items-end md:gap-2 md:px-4">
+    <div class="trip-row grid grid-cols-1 gap-4 p-5 md:grid-cols-[90px_130px_130px_minmax(260px,1fr)_70px] md:items-center md:gap-3 md:px-5 hover:bg-soft/40 transition">
+      <!-- 1. 일차 -->
       <label class="block">
-        <span class="text-[11px] font-black text-slate-500 md:hidden">일차</span>
-        <select class="day mt-1 h-10 w-full rounded-md border border-line bg-white px-2 text-sm font-bold outline-none focus:border-rail focus:ring-2 focus:ring-rail/20 md:mt-0">
+        <span class="text-[11px] font-bold text-slate-500 md:hidden">일차</span>
+        <select class="day mt-1 h-11 w-full rounded-xl border border-line bg-white px-3 text-sm font-semibold outline-none focus:border-rail focus:ring-2 focus:ring-rail/20 md:mt-0">
           <option value="1">1일차</option>
           <option value="2">2일차</option>
           <option value="3">3일차</option>
@@ -314,37 +332,49 @@
           <option value="7">7일차</option>
         </select>
       </label>
+      <!-- 2. 열차구분 -->
       <label class="block">
-        <span class="text-[11px] font-black text-slate-500 md:hidden">열차</span>
-        <select class="train mt-1 h-10 w-full rounded-md border border-line bg-white px-2 text-sm font-bold outline-none focus:border-rail focus:ring-2 focus:ring-rail/20 md:mt-0">
+        <span class="text-[11px] font-bold text-slate-500 md:hidden">열차</span>
+        <select class="train mt-1 h-11 w-full rounded-xl border border-line bg-white px-3 text-sm font-semibold outline-none focus:border-rail focus:ring-2 focus:ring-rail/20 md:mt-0">
           <option value="KTX">KTX</option>
           <option value="REGULAR">일반열차</option>
         </select>
       </label>
+      <!-- 3. 자동 운임 가독성 증대 -->
       <div>
-        <span class="text-[11px] font-black text-slate-500 md:hidden">자동 운임</span>
-        <div class="fare-display mt-1 flex h-10 w-full items-center justify-end rounded-md border border-line bg-soft px-3 text-right text-sm font-black text-ink md:mt-0">자동</div>
+        <span class="text-[11px] font-bold text-slate-500 md:hidden">추정 운임</span>
+        <div class="fare-display mt-1 flex h-11 w-full items-center justify-end rounded-xl border border-line bg-soft px-3.5 text-right text-sm font-black text-rail md:mt-0">자동</div>
       </div>
-      <div class="trip-route col-span-2 md:col-span-1">
-        <span class="text-[11px] font-black text-slate-500 md:hidden">구간</span>
+      <!-- 4. 기차 탑승권 스타일 구간 선택 UI -->
+      <div class="trip-route">
+        <span class="text-[11px] font-bold text-slate-500 md:hidden">출도착 구간</span>
         <input class="origin" type="hidden" value="서울" />
         <input class="destination" type="hidden" value="부산" />
-        <div class="mt-1 grid grid-cols-[1fr_24px_1fr] items-center gap-1 md:mt-0">
+        <div class="mt-1 grid grid-cols-[1fr_36px_1fr] items-center gap-2 md:mt-0">
+          <!-- 출발지 오토컴플릿 -->
           <div class="station-combo relative">
-            <input class="station-input origin-input h-10 w-full rounded-md border border-line bg-white px-3 text-sm font-black outline-none focus:border-rail focus:ring-2 focus:ring-rail/20" value="서울" aria-label="출발역" autocomplete="off" />
-            <div class="station-menu absolute left-0 right-0 top-[calc(100%+6px)] z-30 hidden max-h-48 overflow-auto rounded-md border border-line bg-white p-1 shadow-lift"></div>
+            <input class="station-input origin-input h-11 w-full rounded-xl border border-line bg-white px-3.5 text-sm font-bold outline-none focus:border-rail focus:ring-2 focus:ring-rail/20" value="서울" aria-label="출발역" autocomplete="off" />
+            <div class="station-menu absolute left-0 right-0 top-[calc(100%+6px)] z-30 hidden max-h-48 overflow-auto rounded-xl border border-line bg-white p-1 shadow-lift"></div>
           </div>
-          <span class="text-center text-sm font-black text-slate-400">→</span>
+          <!-- 기차 일러스트 느낌의 화살표선 -->
+          <div class="flex flex-col items-center">
+            <span class="text-slate-400 text-sm font-bold">⇄</span>
+          </div>
+          <!-- 도착지 오토컴플릿 -->
           <div class="station-combo relative">
-            <input class="station-input destination-input h-10 w-full rounded-md border border-line bg-white px-3 text-sm font-black outline-none focus:border-rail focus:ring-2 focus:ring-rail/20" value="부산" aria-label="도착역" autocomplete="off" />
-            <div class="station-menu absolute left-0 right-0 top-[calc(100%+6px)] z-30 hidden max-h-48 overflow-auto rounded-md border border-line bg-white p-1 shadow-lift"></div>
+            <input class="station-input destination-input h-11 w-full rounded-xl border border-line bg-white px-3.5 text-sm font-bold outline-none focus:border-rail focus:ring-2 focus:ring-rail/20" value="부산" aria-label="도착역" autocomplete="off" />
+            <div class="station-menu absolute left-0 right-0 top-[calc(100%+6px)] z-30 hidden max-h-48 overflow-auto rounded-xl border border-line bg-white p-1 shadow-lift"></div>
           </div>
         </div>
       </div>
-      <button type="button" class="remove col-span-2 h-10 rounded-md border border-line bg-white text-sm font-black text-slate-500 hover:border-red-300 hover:text-red-700 md:col-span-1 md:text-xl" aria-label="일정 삭제">삭제</button>
+      <!-- 5. 삭제 버튼 -->
+      <button type="button" class="remove h-11 rounded-xl border border-line bg-white text-xs font-bold text-slate-500 hover:border-red-300 hover:text-red-600 transition md:text-sm">
+        삭제
+      </button>
     </div>
   </template>
 
+  <!-- 실무 로직 스크립트 (기존 로직 유지) -->
   <script>
     const stations = [
       '서울', '용산', '청량리', '영등포', '수원', '광명', '천안아산', '오송', '대전', '김천구미',
@@ -434,9 +464,7 @@
     function saveTheme(theme) {
       try {
         localStorage.setItem('naeilro-theme', theme);
-      } catch {
-        // Ignore storage failures in restricted browser contexts.
-      }
+      } catch {}
     }
 
     function currentTheme() {
@@ -446,11 +474,11 @@
     function themeColors() {
       const dark = currentTheme() === 'dark';
       return {
-        winner: '#00A79D',
-        normal: dark ? '#38BDF8' : '#005BAC',
-        muted: dark ? '#64748B' : '#98A2B3',
-        tick: dark ? '#CBD5E1' : '#475467',
-        grid: dark ? 'rgba(148, 163, 184, 0.18)' : 'rgba(152, 162, 179, 0.18)'
+        winner: '#0D9488',
+        normal: dark ? '#38BDF8' : '#1E40AF',
+        muted: dark ? '#475569' : '#94A3B8',
+        tick: dark ? '#CBD5E1' : '#475569',
+        grid: dark ? 'rgba(148, 163, 184, 0.12)' : 'rgba(148, 163, 184, 0.08)'
       };
     }
 
@@ -467,7 +495,7 @@
       const target = document.getElementById(group.dataset.target);
       group.querySelectorAll('.choice').forEach((button) => {
         const active = button.dataset.value === target.value;
-        button.className = `choice h-9 rounded px-3 text-sm font-black transition ${active ? 'bg-white text-rail shadow-sm' : 'text-slate-500 hover:text-ink'}`;
+        button.className = `choice h-9 rounded-lg px-3 text-sm font-bold transition-all duration-150 ${active ? 'bg-white text-rail shadow-sm font-black' : 'text-slate-500 hover:text-ink'}`;
       });
     }
 
@@ -526,7 +554,7 @@
     function updateInputHint() {
       const trips = collectTrips();
       const fare = trips.reduce((sum, trip) => sum + trip.fare, 0);
-      inputHintEl.textContent = `${rowsEl.children.length}개 행 · 자동 산정 운임 ${won.format(fare)}`;
+      inputHintEl.textContent = `${rowsEl.children.length}개 탑승 등록 · 일반 예매 요금 합산 ${won.format(fare)}`;
     }
 
     function collectTrips() {
@@ -536,7 +564,7 @@
         train: row.querySelector('.train').value,
         origin: normalizeStationName(row.querySelector('.origin-input').value),
         destination: normalizeStationName(row.querySelector('.destination-input').value),
-        memo: `${normalizeStationName(row.querySelector('.origin-input').value)} → ${normalizeStationName(row.querySelector('.destination-input').value)}`
+        memo: `${normalizeStationName(row.querySelector('.origin-input').value)} ⇄ ${normalizeStationName(row.querySelector('.destination-input').value)}`
       })).map((trip) => ({
         ...trip,
         fare: getAutoFare(trip.origin, trip.destination, trip.train)
@@ -604,7 +632,7 @@
       const fare = getAutoFare(origin, destination, train);
       const display = row.querySelector('.fare-display');
       display.textContent = fare > 0 ? won.format(fare) : '0원';
-      display.title = `${origin} → ${destination} 자동 산정 운임`;
+      display.title = `${origin} ⇄ ${destination} 자동 운임`;
     }
 
     function normalizeStationName(value) {
@@ -638,7 +666,7 @@
       matches.forEach((station) => {
         const item = document.createElement('button');
         item.type = 'button';
-        item.className = 'block w-full rounded px-3 py-2 text-left text-sm font-black text-slate-700 hover:bg-teal/10 hover:text-teal';
+        item.className = 'block w-full rounded-lg px-3 py-2 text-left text-sm font-bold text-slate-700 hover:bg-teal/10 hover:text-teal transition-all';
         item.textContent = station;
         item.addEventListener('mousedown', (event) => {
           event.preventDefault();
@@ -651,8 +679,8 @@
 
       if (!matches.length) {
         const empty = document.createElement('div');
-        empty.className = 'px-3 py-2 text-sm font-bold text-slate-500';
-        empty.textContent = '일치하는 역이 없습니다';
+        empty.className = 'px-3 py-2 text-sm font-semibold text-slate-500';
+        empty.textContent = '역 정보 없음';
         menu.appendChild(empty);
       }
     }
@@ -704,9 +732,9 @@
       const flex = analyzeTrips(trips, 'flex3', age);
       const consecutive = analyzeTrips(trips, 'consecutive7', age);
       return [
-        { id: 'normal', name: '일반 승차권', type: '개별 예매', total: normalTotal },
-        { id: 'flex3', name: `내일로 ${passLabels[age]} 선택 3일권`, type: '패스', total: flex.passTotal },
-        { id: 'consecutive7', name: `내일로 ${passLabels[age]} 연속 7일권`, type: '패스', total: consecutive.passTotal }
+        { id: 'normal', name: '일반 승차권 개별 예매', type: '개별 예매', total: normalTotal },
+        { id: 'flex3', name: `내일로 ${passLabels[age]} 선택 3일권`, type: '정액 패스', total: flex.passTotal },
+        { id: 'consecutive7', name: `내일로 ${passLabels[age]} 연속 7일권`, type: '정액 패스', total: consecutive.passTotal }
       ].sort((a, b) => a.total - b.total);
     }
 
@@ -720,25 +748,31 @@
         const isWinner = index === 0;
         const selected = option.id === passTypeEl.value || option.id === 'normal';
         const deltaText = delta === 0 ? '기준' : delta < 0 ? `${won.format(Math.abs(delta))} 절약` : `${won.format(delta)} 높음`;
+        
+        // 랭크 등급 시각화 이모지
+        const rankMedal = index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉';
+        
         const row = document.createElement('div');
-        row.className = `grid gap-2 border-b border-line p-3 last:border-b-0 sm:grid-cols-[44px_1fr_120px_96px] sm:items-center ${isWinner ? 'bg-teal/10' : 'bg-white'}`;
+        row.className = `grid gap-2 border-b border-line p-3.5 last:border-b-0 sm:grid-cols-[44px_1fr_120px_100px] sm:items-center ${isWinner ? 'bg-teal/10' : 'bg-white'}`;
         row.innerHTML = `
-          <span class="flex h-9 w-9 items-center justify-center rounded-md ${isWinner ? 'bg-teal text-white' : 'bg-soft text-slate-600'} text-base font-black">${index + 1}</span>
+          <span class="flex h-9 w-9 items-center justify-center rounded-xl ${isWinner ? 'bg-teal text-white shadow-neon' : 'bg-soft text-slate-600'} text-base font-black">
+            ${rankMedal}
+          </span>
           <div>
             <div class="flex flex-wrap items-center gap-1.5">
-              <p class="font-black">${option.name}</p>
-              ${isWinner ? '<span class="rounded-full bg-teal px-2 py-0.5 text-[11px] font-black text-white">BEST</span>' : ''}
-              ${selected ? '<span class="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-black text-slate-600">표시</span>' : ''}
+              <p class="font-black text-sm sm:text-base">${option.name}</p>
+              ${isWinner ? '<span class="rounded-full bg-teal px-2 py-0.5 text-[10px] font-black text-white">BEST</span>' : ''}
+              ${selected ? '<span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-black text-slate-600">선택</span>' : ''}
             </div>
-            <p class="mt-0.5 text-xs font-bold text-slate-500">${option.type}</p>
+            <p class="mt-0.5 text-xs font-bold text-slate-400">${option.type}</p>
           </div>
-          <p class="text-lg font-black sm:text-right">${won.format(option.total)}</p>
+          <p class="text-base font-black sm:text-right text-slate-700">${won.format(option.total)}</p>
           <p class="text-sm font-black ${delta < 0 ? 'text-teal' : delta > 0 ? 'text-caution' : 'text-slate-500'} sm:text-right">${deltaText}</p>
         `;
         board.appendChild(row);
       });
 
-      document.getElementById('leaderboardMeta').textContent = `${options.length}개 비교`;
+      document.getElementById('leaderboardMeta').textContent = `${options.length}개 대상 비교`;
       renderStickyLeaderboard(options);
     }
 
@@ -750,7 +784,7 @@
       const delta = winner.total - normal.total;
       stickyWinnerNameEl.textContent = winner.name;
       stickyWinnerTotalEl.textContent = won.format(winner.total);
-      stickyWinnerDeltaEl.textContent = delta === 0 ? '기준 금액' : delta < 0 ? `${won.format(Math.abs(delta))} 절약` : `${won.format(delta)} 높음`;
+      stickyWinnerDeltaEl.textContent = delta === 0 ? '기준 금액' : delta < 0 ? `${won.format(Math.abs(delta))} 절약` : `${won.format(delta)} 추가 지출`;
       stickyWinnerDeltaEl.className = `text-xs font-black ${delta <= 0 ? 'text-teal' : 'text-caution'}`;
       updateStickyLeaderboardVisibility();
     }
@@ -764,15 +798,18 @@
       const container = document.getElementById('detailReport');
       container.innerHTML = '';
       result.details.sort((a, b) => a.day - b.day || a.id - b.id).forEach((trip) => {
-        const trainLabel = trip.train === 'KTX' ? 'KTX' : '일반열차';
+        const trainLabel = trip.train === 'KTX' ? 'KTX 고속열차' : '일반열차';
         const memo = trip.memo ? ` · ${trip.memo}` : '';
-        const appliedClass = trip.benefit.applied ? 'border-teal/30 bg-teal/10' : 'border-amber-200 bg-amber-50';
+        const appliedClass = trip.benefit.applied ? 'border-teal/20 bg-teal/5' : 'border-amber-200/50 bg-amber-50/40';
         const item = document.createElement('div');
-        item.className = `rounded-md border p-3 ${appliedClass}`;
+        item.className = `rounded-xl border p-4 ${appliedClass} transition`;
         item.innerHTML = `
-          <p class="text-xs font-black ${trip.benefit.applied ? 'text-teal' : 'text-caution'}">${trip.benefit.applied ? '무료 처리' : '운임 부과'}</p>
-          <p class="mt-1 font-bold text-slate-800">${trip.day}일차 ${trainLabel}${memo}</p>
-          <p class="mt-0.5 text-xs font-semibold text-slate-600">${trip.benefit.reason} · ${trip.benefit.applied ? `${won.format(trip.fare)} → 0원` : `${won.format(trip.fare)} 부과`}</p>
+          <div class="flex items-center justify-between gap-1.5">
+            <span class="text-xs font-black ${trip.benefit.applied ? 'text-teal' : 'text-caution'}">${trip.benefit.applied ? '패스 혜택 적용' : '본인 부담 운임'}</span>
+            <span class="text-xs font-bold text-slate-400">${trip.day}일차</span>
+          </div>
+          <p class="mt-2 font-black text-slate-800 text-sm">${trainLabel}${memo}</p>
+          <p class="mt-1 text-xs font-bold text-slate-500">${trip.benefit.reason} (${trip.benefit.applied ? `${won.format(trip.fare)} → 0원` : `${won.format(trip.fare)}`})</p>
         `;
         container.appendChild(item);
       });
@@ -789,8 +826,8 @@
         const freeCount = dayTrips.filter((trip) => trip.benefit.applied).length;
         const charged = dayTrips.reduce((sum, trip) => sum + trip.benefit.chargedFare, 0);
         const item = document.createElement('div');
-        item.className = 'flex items-center justify-between rounded-md border border-line bg-soft px-3 py-2 text-sm';
-        item.innerHTML = `<span class="font-black">${day}일차</span><span class="font-bold text-slate-600">무료 ${freeCount}건 · 부과 ${won.format(charged)}</span>`;
+        item.className = 'flex items-center justify-between rounded-xl border border-line bg-soft px-3.5 py-2.5 text-xs font-bold';
+        item.innerHTML = `<span class="font-black text-slate-600">${day}일차 운행</span><span class="text-slate-500">할인 ${freeCount}건 · 추가 결제 ${won.format(charged)}</span>`;
         dayUsage.appendChild(item);
       }
     }
@@ -807,12 +844,12 @@
       document.getElementById('savingBadge').textContent = selectedDiff < 0 ? `${won.format(Math.abs(selectedDiff))}↓` : selectedDiff > 0 ? `${won.format(selectedDiff)}↑` : '0원';
 
       if (winner.id === 'normal') {
-        document.getElementById('resultTitle').textContent = '일반 예매가 1위';
-        document.getElementById('resultMessage').textContent = `${traveler}님 일정에서는 개별 예매가 가장 낮습니다. ${selectedPassName}은 일반 예매 대비 ${won.format(Math.max(0, selectedDiff))} 높게 계산됩니다.`;
+        document.getElementById('resultTitle').textContent = '일반 개별 예매가 유리';
+        document.getElementById('resultMessage').textContent = `${traveler}님의 일정 경로에서는 패스보다 일반 개별 예매 요금이 더 저렴합니다. 선택하신 ${selectedPassName}은 일반 예매 대비 ${won.format(Math.max(0, selectedDiff))} 비효율적입니다.`;
       } else {
         const save = normalOption.total - winner.total;
-        document.getElementById('resultTitle').textContent = `${winner.name} 1위`;
-        document.getElementById('resultMessage').textContent = `${traveler}님은 ${winner.name}이 일반 예매보다 ${won.format(save)} 유리합니다.`;
+        document.getElementById('resultTitle').textContent = `${winner.name} 권장`;
+        document.getElementById('resultMessage').textContent = `${traveler}님에게는 ${winner.name}이 개별 예매 대비 약 ${won.format(save)} 더 절약되는 최고의 선택지입니다.`;
       }
     }
 
@@ -829,11 +866,11 @@
       const data = {
         labels: options.map((option) => option.name.replace('내일로 ', '')),
         datasets: [{
-          label: '총지출',
+          label: '총 지출 비용',
           data: options.map((option) => option.total),
           backgroundColor: options.map((option, index) => index === 0 ? colors.winner : option.id === 'normal' ? colors.normal : colors.muted),
-          borderRadius: 5,
-          maxBarThickness: 46
+          borderRadius: 8,
+          maxBarThickness: 40
         }]
       };
       const chartOptions = {
@@ -856,9 +893,9 @@
     }
 
     function showValidation(message) {
-      document.getElementById('resultTitle').textContent = '입력값 확인';
+      document.getElementById('resultTitle').textContent = '입력값 미흡';
       document.getElementById('resultMessage').textContent = message;
-      document.getElementById('leaderboard').innerHTML = `<div class="bg-red-50 p-3 text-sm font-bold text-red-700">${message}</div>`;
+      document.getElementById('leaderboard').innerHTML = `<div class="bg-red-50 p-4 text-xs font-black text-red-700">${message}</div>`;
       document.getElementById('detailReport').innerHTML = '';
     }
 
@@ -866,7 +903,7 @@
       updateInputHint();
       const trips = collectTrips();
       if (trips.length === 0) {
-        showValidation('운임이 입력된 탑승 일정을 1개 이상 추가해야 합니다.');
+        showValidation('경로가 온전히 등록된 탑승 일정을 1개 이상 작성해야 비교를 수행할 수 있습니다.');
         return;
       }
       const result = analyzeTrips(trips);
